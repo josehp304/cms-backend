@@ -230,6 +230,30 @@ The project uses strict TypeScript configuration with:
 - `npm run db:push` - Push schema to database
 - `npm run db:studio` - Open Drizzle Studio
 
+## 📚 Documentation Files
+
+This project includes comprehensive documentation for different use cases:
+
+- **[README.md](./README.md)** - You are here! Backend setup and configuration guide
+- **[COPILOT_GUIDE.md](./COPILOT_GUIDE.md)** - 🤖 Complete guide for frontend integration with GitHub Copilot
+  - TypeScript interfaces for all entities
+  - API client implementation
+  - React hooks and component examples
+  - Next.js integration patterns
+  - Common use cases and Copilot prompts
+- **[QUICK_REFERENCE.md](./QUICK_REFERENCE.md)** - 📌 Quick API reference card for frontend developers
+  - All endpoints at a glance
+  - TypeScript interfaces
+  - Quick code snippets
+- **[API_TESTS.md](./API_TESTS.md)** - 🧪 cURL examples for testing all API endpoints
+- **[PROJECT_SUMMARY.md](./PROJECT_SUMMARY.md)** - 📋 Complete project overview and features
+
+### For Frontend Developers
+Start with **[COPILOT_GUIDE.md](./COPILOT_GUIDE.md)** - it's designed to help you integrate this backend with any frontend framework (React, Next.js, Vue, etc.) using GitHub Copilot.
+
+### For API Testing
+Use **[API_TESTS.md](./API_TESTS.md)** for ready-to-use cURL commands to test all endpoints.
+
 ## License
 
 ISC
