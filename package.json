@@ -2,11 +2,11 @@
   "name": "nyxta_backend",
   "version": "1.0.0",
   "description": "this backend will be used to databse and the nyxta website",
-  "main": "dist/src/server.js",
+  "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node src/server.ts",
     "build": "tsc",
-    "start": "node dist/src/server.js",
+    "start": "node dist/server.js",
     "seed": "ts-node src/seed.ts",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
