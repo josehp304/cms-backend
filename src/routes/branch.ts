@@ -2,23 +2,73 @@ import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { branch, type NewBranch } from '../db/schema';
 import { eq } from 'drizzle-orm';
+import multer from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
+import { Readable } from 'stream';
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_NAME || '',
+  api_key: process.env.CLOUDINARY_CLOUD_KEY || '',
+  api_secret: process.env.CLOUDINARY_CLOUD_SECRET || '',
+});
+
+// Configure multer for in-memory storage
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Type for multer request
+type MulterRequest = Request & { file?: Express.Multer.File | undefined };
+
+// Helper function to upload buffer to Cloudinary
+const uploadToCloudinary = (buffer: Buffer, folder: string): Promise<{ secure_url: string; public_id: string }> => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder },
+      (error, result) => {
+        if (error) reject(error);
+        else if (result) resolve({ secure_url: result.secure_url, public_id: result.public_id });
+        else reject(new Error('Upload failed'));
+      }
+    );
+    Readable.from(buffer).pipe(stream);
+  });
+};
 
 const router = Router();
 
-// CREATE - Add new branch
-router.post('/', async (req: Request, res: Response): Promise<void> => {
+// CREATE - Add new branch with optional thumbnail upload
+router.post('/', upload.single('thumbnail'), async (req: MulterRequest, res: Response): Promise<void> => {
   try {
+    let thumbnailUrl: string | undefined;
+
+    // If thumbnail file is provided, upload to Cloudinary
+    if (req.file) {
+      try {
+        const uploadResult = await uploadToCloudinary(req.file.buffer, 'branch-thumbnails');
+        thumbnailUrl = uploadResult.secure_url;
+      } catch (uploadError) {
+        console.error('Error uploading thumbnail to Cloudinary:', uploadError);
+        res.status(500).json({
+          success: false,
+          error: 'Failed to upload thumbnail',
+          details: uploadError instanceof Error ? uploadError.message : 'Unknown error',
+        });
+        return;
+      }
+    }
+
     const branchData: NewBranch = {
       name: req.body.name,
-      contact_no: req.body.contact_no,
+      contact_no: req.body.contact_no ? JSON.parse(req.body.contact_no) : undefined,
       address: req.body.address,
       gmap_link: req.body.gmap_link,
-      room_rate: req.body.room_rate,
-      prime_location_perks: req.body.prime_location_perks,
-      amenities: req.body.amenities,
-      property_features: req.body.property_features,
-      reg_fee: req.body.reg_fee,
-      is_mess_available: req.body.is_mess_available,
+      room_rate: req.body.room_rate ? JSON.parse(req.body.room_rate) : undefined,
+      prime_location_perks: req.body.prime_location_perks ? JSON.parse(req.body.prime_location_perks) : undefined,
+      amenities: req.body.amenities ? JSON.parse(req.body.amenities) : undefined,
+      property_features: req.body.property_features ? JSON.parse(req.body.property_features) : undefined,
+      reg_fee: req.body.reg_fee ? parseInt(req.body.reg_fee) : undefined,
+      is_mess_available: req.body.is_mess_available === 'true',
+      thumbnail: thumbnailUrl, // Use uploaded Cloudinary URL
     };
 
     const newBranch = await db.insert(branch).values(branchData).returning();
@@ -99,8 +149,8 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-// UPDATE - Update branch by ID
-router.put('/:id', async (req: Request, res: Response): Promise<void> => {
+// UPDATE - Update branch by ID with optional thumbnail upload
+router.put('/:id', upload.single('thumbnail'), async (req: MulterRequest, res: Response): Promise<void> => {
   try {
     const branchId = parseInt(req.params.id || '0');
     
@@ -112,10 +162,45 @@ router.put('/:id', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    let thumbnailUrl: string | undefined;
+
+    // If thumbnail file is provided, upload to Cloudinary
+    if (req.file) {
+      try {
+        const uploadResult = await uploadToCloudinary(req.file.buffer, 'branch-thumbnails');
+        thumbnailUrl = uploadResult.secure_url;
+      } catch (uploadError) {
+        console.error('Error uploading thumbnail to Cloudinary:', uploadError);
+        res.status(500).json({
+          success: false,
+          error: 'Failed to upload thumbnail',
+          details: uploadError instanceof Error ? uploadError.message : 'Unknown error',
+        });
+        return;
+      }
+    }
+
     const updateData: Partial<NewBranch> = {
-      ...req.body,
+      name: req.body.name,
+      contact_no: req.body.contact_no ? JSON.parse(req.body.contact_no) : undefined,
+      address: req.body.address,
+      gmap_link: req.body.gmap_link,
+      room_rate: req.body.room_rate ? JSON.parse(req.body.room_rate) : undefined,
+      prime_location_perks: req.body.prime_location_perks ? JSON.parse(req.body.prime_location_perks) : undefined,
+      amenities: req.body.amenities ? JSON.parse(req.body.amenities) : undefined,
+      property_features: req.body.property_features ? JSON.parse(req.body.property_features) : undefined,
+      reg_fee: req.body.reg_fee ? parseInt(req.body.reg_fee) : undefined,
+      is_mess_available: req.body.is_mess_available ? req.body.is_mess_available === 'true' : undefined,
+      thumbnail: thumbnailUrl, // Use uploaded Cloudinary URL if provided
       updated_at: new Date(),
     };
+
+    // Remove undefined values to avoid overwriting with undefined
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key as keyof typeof updateData] === undefined) {
+        delete updateData[key as keyof typeof updateData];
+      }
+    });
 
     const updatedBranch = await db
       .update(branch)

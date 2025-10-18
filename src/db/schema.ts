@@ -14,6 +14,7 @@ export const branch = pgTable('branch', {
   property_features: text('property_features').array(),
   reg_fee: integer('reg_fee'),
   is_mess_available: boolean('is_mess_available').default(false),
+  thumbnail: text('thumbnail'), // Front cover image URL (Cloudinary)
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });
