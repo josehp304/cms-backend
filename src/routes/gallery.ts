@@ -3,11 +3,19 @@ import { db } from '../db';
 import { gallery, branch, type NewGallery } from '../db/schema';
 import { eq, and } from 'drizzle-orm';
 import multer from 'multer';
-// Use native fetch + global FormData/Blob (Node 18+)
+import { v2 as cloudinary } from 'cloudinary';
+import { Readable } from 'stream';
 
 // Multer setup (in-memory)
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_NAME || '',
+  api_key: process.env.CLOUDINARY_CLOUD_KEY || '',
+  api_secret: process.env.CLOUDINARY_CLOUD_SECRET || '',
+});
 
 const router = Router();
 
@@ -40,7 +48,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-// UPLOAD - Accept an image file, upload to ImageHippo, store returned URL in DB
+// UPLOAD - Accept an image file, upload to Cloudinary, store returned URL in DB
 // Accepts multipart/form-data: file (image), branch_id OR branch_name, title, description, tags
 // Augment Request type locally for multer
 type MulterRequest = Request & { file?: any };
@@ -54,55 +62,26 @@ router.post('/upload', upload.single('file'), async (req: MulterRequest, res: Re
 
     const { branch_id, branch_name, title, description, tags, display_order } = req.body;
 
-    const imageHippoUrl = process.env.IMAGEHIPPO_UPLOAD_URL || 'https://api.imghippo.com/v1/upload';
-    const imageHippoKey = (process.env.IMAGEHIPPO_API_KEY || process.env.IMGHIPPO_API_KEY || '').trim();
-    if (!imageHippoKey) {
-      res.status(500).json({ success: false, error: 'IMAGEHIPPO_API_KEY/IMGHIPPO_API_KEY is missing on server' });
-      return;
-    }
+    // Upload to Cloudinary using upload_stream
+    const uploadPromise = new Promise<any>((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'gallery',
+          resource_type: 'auto',
+          public_id: title ? title.replace(/[^a-z0-9]/gi, '_').toLowerCase() : undefined,
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
 
-    // Build multipart using global FormData/Blob so fetch sets Content-Type and boundary automatically
-    const fd = new (globalThis as any).FormData();
-    fd.append('api_key', imageHippoKey);
-    const blob = new (globalThis as any).Blob([req.file.buffer], { type: req.file.mimetype });
-    // 3rd arg as filename is supported in WHATWG FormData
-    fd.append('file', blob, req.file.originalname);
-    if (title) fd.append('title', title);
-
-    const uploadResp = await fetch(imageHippoUrl, {
-      method: 'POST',
-      body: fd as any,
+      const bufferStream = Readable.from(req.file.buffer);
+      bufferStream.pipe(stream);
     });
 
-    // Read body once; try JSON, fallback to text
-    const rawText = await uploadResp.text();
-    let parsed: any;
-    try { parsed = JSON.parse(rawText); } catch { parsed = undefined; }
-
-    if (!uploadResp.ok) {
-      res.status(uploadResp.status).json({
-        success: false,
-        error: 'ImageHippo upload failed',
-        details: {
-          status: uploadResp.status,
-          statusText: uploadResp.statusText,
-          response: parsed ?? rawText,
-        },
-      });
-      return;
-    }
-
-    const data = parsed ?? {};
-    const returnedUrl = data?.data?.view_url || data?.data?.url;
-
-    if (!data?.success || !returnedUrl) {
-      res.status(502).json({
-        success: false,
-        error: 'Failed to get image URL from ImageHippo',
-        details: data,
-      });
-      return;
-    }
+    const uploadResult = await uploadPromise;
+    const returnedUrl = uploadResult.secure_url;
 
     // Resolve branch
     let finalBranchId: number | undefined = undefined;
@@ -135,12 +114,21 @@ router.post('/upload', upload.single('file'), async (req: MulterRequest, res: Re
 
     const newGallery = await db.insert(gallery).values(galleryData).returning();
 
-    res.status(201).json({ success: true, data: newGallery[0], message: 'Image uploaded and saved to gallery' });
+    res.status(201).json({ 
+      success: true, 
+      data: newGallery[0], 
+      cloudinary: {
+        public_id: uploadResult.public_id,
+        secure_url: uploadResult.secure_url,
+        format: uploadResult.format,
+      },
+      message: 'Image uploaded to Cloudinary and saved to gallery' 
+    });
   } catch (error) {
-    console.error('Error uploading image to ImageHippo:', error);
+    console.error('Error uploading image to Cloudinary:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to upload image to ImageHippo',
+      error: 'Failed to upload image to Cloudinary',
       details: error instanceof Error ? error.message : 'Unknown',
     });
   }
@@ -513,58 +501,36 @@ router.delete('/branch/:branchId', async (req: Request, res: Response): Promise<
   }
 });
 
-// DELETE IMAGE FROM IMAGEHIPPO - Delete image from ImageHippo hosting service
+// DELETE IMAGE FROM CLOUDINARY - Delete image from Cloudinary hosting service
 router.delete('/delete-from-host', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { image_url } = req.body;
-    if (!image_url) {
-      res.status(400).json({ success: false, error: 'image_url is required' });
+    const { public_id } = req.body;
+    if (!public_id) {
+      res.status(400).json({ success: false, error: 'public_id is required' });
       return;
     }
 
-    const imageHippoDeleteUrl = process.env.IMAGEHIPPO_DELETE_URL || 'https://api.imghippo.com/v1/delete';
-    const imageHippoKey = (process.env.IMAGEHIPPO_API_KEY || process.env.IMGHIPPO_API_KEY || '').trim();
-    if (!imageHippoKey) {
-      res.status(500).json({ success: false, error: 'IMAGEHIPPO_API_KEY/IMGHIPPO_API_KEY is missing on server' });
-      return;
-    }
+    // Delete from Cloudinary using public_id
+    const deleteResult = await cloudinary.uploader.destroy(public_id);
 
-    const fd = new (globalThis as any).FormData();
-    fd.append('api_key', imageHippoKey);
-    fd.append('url', image_url);
-
-    const deleteResp = await fetch(imageHippoDeleteUrl, {
-      method: 'POST',
-      body: fd as any,
-    });
-
-    const rawText = await deleteResp.text();
-    let parsed: any;
-    try { parsed = JSON.parse(rawText); } catch { parsed = undefined; }
-
-    if (!deleteResp.ok) {
-      res.status(deleteResp.status).json({
-        success: false,
-        error: 'Failed to delete image from ImageHippo',
-        details: {
-          status: deleteResp.status,
-          statusText: deleteResp.statusText,
-          response: parsed ?? rawText,
-        },
+    if (deleteResult.result === 'ok' || deleteResult.result === 'not found') {
+      res.status(200).json({
+        success: true,
+        message: deleteResult.result === 'ok' ? 'Image deleted from Cloudinary successfully' : 'Image not found in Cloudinary',
+        data: deleteResult,
       });
-      return;
+    } else {
+      res.status(502).json({ 
+        success: false, 
+        error: 'Failed to delete image from Cloudinary', 
+        details: deleteResult 
+      });
     }
-
-    // Return raw parsed data from ImageHippo to keep behavior similar to Next.js example
-    res.status(200).json({
-      success: true,
-      data: parsed ?? rawText,
-    });
   } catch (error) {
-    console.error('Error deleting image from ImageHippo:', error);
+    console.error('Error deleting image from Cloudinary:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to delete image from ImageHippo',
+      error: 'Failed to delete image from Cloudinary',
       details: error instanceof Error ? error.message : 'Unknown',
     });
   }
