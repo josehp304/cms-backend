@@ -59,6 +59,11 @@ Create a `.env` file in the root directory:
 DATABASE_URL=your_neon_postgres_connection_string
 PORT=3000
 NODE_ENV=development
+
+# ImageHippo (image hosting) configuration
+IMAGEHIPPO_UPLOAD_URL=https://api.imghippo.com/v1/upload
+IMAGEHIPPO_DELETE_URL=https://api.imghippo.com/v1/delete
+IMAGEHIPPO_API_KEY=your_imagehippo_api_key
 ```
 
 ## Installation
@@ -125,10 +130,12 @@ npm start
 
 ### Gallery Endpoints
 - `POST /api/gallery` - Create new gallery image
+- `POST /api/gallery/upload` - Upload image to ImageHippo and save to DB
 - `GET /api/gallery` - Get all gallery images (query: `?branch_id=1`)
 - `GET /api/gallery/:id` - Get single gallery image
 - `PUT /api/gallery/:id` - Update gallery image
-- `DELETE /api/gallery/:id` - Delete gallery image
+- `DELETE /api/gallery/:id` - Delete gallery image from DB
+- `DELETE /api/gallery/delete-from-host` - Delete image from ImageHippo hosting
 
 ### User Enquiries Endpoints
 - `POST /api/enquiries` - Create new enquiry
@@ -185,6 +192,38 @@ curl -X POST http://localhost:3000/api/gallery \
     "title": "Room View",
     "tags": ["room", "interior"],
     "display_order": 1
+  }'
+```
+
+### Upload Image (multipart -> ImageHippo -> saved to DB)
+
+Use multipart/form-data with field name `file`. Provide either `branch_id` or `branch_name`.
+
+```bash
+curl -X POST http://localhost:3000/api/gallery/upload \
+  -F "file=@/path/to/image.jpg" \
+  -F "branch_id=1" \
+  -F "title=Lobby View" \
+  -F "tags=room,interior"
+```
+
+Or using branch name:
+
+```bash
+curl -X POST http://localhost:3000/api/gallery/upload \
+  -F "file=@/path/to/image.jpg" \
+  -F "branch_name=Nyxta Central" \
+  -F "title=Lobby View" \
+  -F "description=Main lobby area"
+```
+
+### Delete Image from ImageHippo
+
+```bash
+curl -X DELETE http://localhost:3000/api/gallery/delete-from-host \
+  -H "Content-Type: application/json" \
+  -d '{
+    "image_url": "https://i.imghippo.com/files/00a001111.jpg"
   }'
 ```
 
