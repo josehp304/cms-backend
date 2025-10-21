@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { branch, type NewBranch } from '../db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, asc } from 'drizzle-orm';
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
 import { Readable } from 'stream';
@@ -68,6 +68,10 @@ router.post('/', upload.single('thumbnail'), async (req: MulterRequest, res: Res
       property_features: req.body.property_features ? JSON.parse(req.body.property_features) : undefined,
       reg_fee: req.body.reg_fee ? parseInt(req.body.reg_fee) : undefined,
       is_mess_available: req.body.is_mess_available === 'true',
+      is_ladies: req.body.is_ladies === 'true',
+      is_cooking: req.body.is_cooking === 'true',
+      cooking_price: req.body.cooking_price ? parseInt(req.body.cooking_price) : undefined,
+      display_order: req.body.display_order ? parseInt(req.body.display_order) : undefined,
       thumbnail: thumbnailUrl, // Use uploaded Cloudinary URL
     };
 
@@ -91,7 +95,7 @@ router.post('/', upload.single('thumbnail'), async (req: MulterRequest, res: Res
 // READ - Get all branches
 router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
-    const branches = await db.select().from(branch);
+    const branches = await db.select().from(branch).orderBy(asc(branch.display_order));
     
     res.status(200).json({
       success: true,
@@ -191,6 +195,10 @@ router.put('/:id', upload.single('thumbnail'), async (req: MulterRequest, res: R
       property_features: req.body.property_features ? JSON.parse(req.body.property_features) : undefined,
       reg_fee: req.body.reg_fee ? parseInt(req.body.reg_fee) : undefined,
       is_mess_available: req.body.is_mess_available ? req.body.is_mess_available === 'true' : undefined,
+      is_ladies: req.body.is_ladies ? req.body.is_ladies === 'true' : undefined,
+      is_cooking: req.body.is_cooking ? req.body.is_cooking === 'true' : undefined,
+      cooking_price: req.body.cooking_price ? parseInt(req.body.cooking_price) : undefined,
+      display_order: req.body.display_order ? parseInt(req.body.display_order) : undefined,
       thumbnail: thumbnailUrl, // Use uploaded Cloudinary URL if provided
       updated_at: new Date(),
     };
