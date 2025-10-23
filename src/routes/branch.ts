@@ -183,7 +183,7 @@ router.put('/:id', upload.single('thumbnail'), async (req: MulterRequest, res: R
         return;
       }
     }
-
+    console.log('display order change is ', req.body.display_order);
     const updateData: Partial<NewBranch> = {
       name: req.body.name,
       contact_no: req.body.contact_no ? JSON.parse(req.body.contact_no) : undefined,
