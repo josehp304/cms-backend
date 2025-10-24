@@ -70,7 +70,7 @@ router.post('/', upload.single('thumbnail'), async (req: MulterRequest, res: Res
       is_mess_available: req.body.is_mess_available === 'true',
       is_ladies: req.body.is_ladies === 'true',
       is_cooking: req.body.is_cooking === 'true',
-      cooking_price: req.body.cooking_price ? parseInt(req.body.cooking_price) : undefined,
+      cooking_price: req.body.cooking_price || undefined,
       display_order: req.body.display_order ? parseInt(req.body.display_order) : undefined,
       thumbnail: thumbnailUrl, // Use uploaded Cloudinary URL
     };
@@ -197,12 +197,12 @@ router.put('/:id', upload.single('thumbnail'), async (req: MulterRequest, res: R
       is_mess_available: req.body.is_mess_available ? req.body.is_mess_available === 'true' : undefined,
       is_ladies: req.body.is_ladies ? req.body.is_ladies === 'true' : undefined,
       is_cooking: req.body.is_cooking ? req.body.is_cooking === 'true' : undefined,
-      cooking_price: req.body.cooking_price ? parseInt(req.body.cooking_price) : undefined,
+      cooking_price: req.body.cooking_price || undefined,
       display_order: req.body.display_order ? parseInt(req.body.display_order) : undefined,
       thumbnail: thumbnailUrl, // Use uploaded Cloudinary URL if provided
       updated_at: new Date(),
     };
-
+    
     // Remove undefined values to avoid overwriting with undefined
     Object.keys(updateData).forEach(key => {
       if (updateData[key as keyof typeof updateData] === undefined) {

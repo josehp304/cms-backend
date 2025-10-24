@@ -16,7 +16,7 @@ export const branch = pgTable('branch', {
   is_mess_available: boolean('is_mess_available').default(false),
   is_ladies: boolean('is_ladies').default(false),
   is_cooking: boolean('is_cooking').default(false),
-  cooking_price: integer('cooking_price'),
+  cooking_price: text('cooking_price'),
   display_order: integer('display_order').default(0),
   thumbnail: text('thumbnail'), // Front cover image URL (Cloudinary)
   created_at: timestamp('created_at').defaultNow().notNull(),
