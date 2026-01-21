@@ -75,7 +75,8 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
 // READ - Get single enquiry by ID
 router.get('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
-    const enquiryId = parseInt(req.params.id || '0');
+    const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const enquiryId = parseInt(idParam || '0');
     
     if (isNaN(enquiryId)) {
       res.status(400).json({
@@ -116,7 +117,8 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
 // UPDATE - Update enquiry by ID
 router.put('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
-    const enquiryId = parseInt(req.params.id || '0');
+    const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const enquiryId = parseInt(idParam || '0');
     
     if (isNaN(enquiryId)) {
       res.status(400).json({
@@ -160,7 +162,8 @@ router.put('/:id', async (req: Request, res: Response): Promise<void> => {
 // DELETE - Delete enquiry by ID
 router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
-    const enquiryId = parseInt(req.params.id || '0');
+    const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const enquiryId = parseInt(idParam || '0');
     
     if (isNaN(enquiryId)) {
       res.status(400).json({

@@ -175,7 +175,8 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
 // READ - Get single gallery image by ID
 router.get('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
-    const galleryId = parseInt(req.params.id || '0');
+    const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const galleryId = parseInt(idParam || '0');
     
     if (isNaN(galleryId)) {
       res.status(400).json({
@@ -216,7 +217,8 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
 // UPDATE - Update gallery image by ID
 router.put('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
-    const galleryId = parseInt(req.params.id || '0');
+    const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const galleryId = parseInt(idParam || '0');
     
     if (isNaN(galleryId)) {
       res.status(400).json({
@@ -260,7 +262,8 @@ router.put('/:id', async (req: Request, res: Response): Promise<void> => {
 // DELETE - Delete gallery image by ID
 router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
-    const galleryId = parseInt(req.params.id || '0');
+    const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const galleryId = parseInt(idParam || '0');
     
     if (isNaN(galleryId)) {
       res.status(400).json({
@@ -303,7 +306,8 @@ router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
 // GET - Get all gallery images for a specific branch
 router.get('/branch/:branchId', async (req: Request, res: Response): Promise<void> => {
   try {
-    const branchId = parseInt(req.params.branchId || '0');
+    const idParam = Array.isArray(req.params.branchId) ? req.params.branchId[0] : req.params.branchId;
+    const branchId = parseInt(idParam || '0');
     
     if (isNaN(branchId)) {
       res.status(400).json({
@@ -337,7 +341,8 @@ router.get('/branch/:branchId', async (req: Request, res: Response): Promise<voi
 // POST - Add new gallery image to a specific branch
 router.post('/branch/:branchId', async (req: Request, res: Response): Promise<void> => {
   try {
-    const branchId = parseInt(req.params.branchId || '0');
+    const idParam = Array.isArray(req.params.branchId) ? req.params.branchId[0] : req.params.branchId;
+    const branchId = parseInt(idParam || '0');
     
     if (isNaN(branchId)) {
       res.status(400).json({
@@ -376,8 +381,10 @@ router.post('/branch/:branchId', async (req: Request, res: Response): Promise<vo
 // PUT - Update gallery image for a specific branch
 router.put('/branch/:branchId/image/:imageId', async (req: Request, res: Response): Promise<void> => {
   try {
-    const branchId = parseInt(req.params.branchId || '0');
-    const imageId = parseInt(req.params.imageId || '0');
+    const idParam = Array.isArray(req.params.branchId) ? req.params.branchId[0] : req.params.branchId;
+    const branchId = parseInt(idParam || '0');
+    const idParamImage = Array.isArray(req.params.imageId) ? req.params.imageId[0] : req.params.imageId;
+    const imageId = parseInt(idParamImage || '0');
     
     if (isNaN(branchId) || isNaN(imageId)) {
       res.status(400).json({
@@ -426,8 +433,10 @@ router.put('/branch/:branchId/image/:imageId', async (req: Request, res: Respons
 // DELETE - Delete gallery image from a specific branch
 router.delete('/branch/:branchId/image/:imageId', async (req: Request, res: Response): Promise<void> => {
   try {
-    const branchId = parseInt(req.params.branchId || '0');
-    const imageId = parseInt(req.params.imageId || '0');
+    const idParam = Array.isArray(req.params.branchId) ? req.params.branchId[0] : req.params.branchId;
+    const branchId = parseInt(idParam || '0');
+    const idParamImage = Array.isArray(req.params.imageId) ? req.params.imageId[0] : req.params.imageId;
+    const imageId = parseInt(idParamImage || '0');
     
     if (isNaN(branchId) || isNaN(imageId)) {
       res.status(400).json({
@@ -471,7 +480,8 @@ router.delete('/branch/:branchId/image/:imageId', async (req: Request, res: Resp
 // DELETE - Delete all gallery images for a specific branch
 router.delete('/branch/:branchId', async (req: Request, res: Response): Promise<void> => {
   try {
-    const branchId = parseInt(req.params.branchId || '0');
+    const idParam = Array.isArray(req.params.branchId) ? req.params.branchId[0] : req.params.branchId;
+    const branchId = parseInt(idParam || '0');
     
     if (isNaN(branchId)) {
       res.status(400).json({

@@ -115,7 +115,8 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
 // READ - Get single branch by ID
 router.get('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
-    const branchId = parseInt(req.params.id || '0');
+    const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const branchId = parseInt(idParam || '0');
     
     if (isNaN(branchId)) {
       res.status(400).json({
@@ -156,7 +157,8 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
 // UPDATE - Update branch by ID with optional thumbnail upload
 router.put('/:id', upload.single('thumbnail'), async (req: MulterRequest, res: Response): Promise<void> => {
   try {
-    const branchId = parseInt(req.params.id || '0');
+    const idParam = Array.isArray(req.params.id)? req.params.id[0]: req.params.id
+    const branchId = parseInt(idParam || '0');
     
     if (isNaN(branchId)) {
       res.status(400).json({
@@ -242,7 +244,8 @@ router.put('/:id', upload.single('thumbnail'), async (req: MulterRequest, res: R
 // DELETE - Delete branch by ID
 router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
-    const branchId = parseInt(req.params.id || '0');
+    const idParam = Array.isArray(req.params.id) ? req.params.id[0]: req.params.id;
+    const branchId = parseInt(idParam || '0');
     
     if (isNaN(branchId)) {
       res.status(400).json({
