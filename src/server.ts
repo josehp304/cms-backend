@@ -11,7 +11,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const allowedHosts = process.env.ALLOWED_HOSTS ? process.env.ALLOWED_HOSTS.split(',') : ['http://localhost:5173'];  
+const allowedHosts = ["http://localhost:5173","https://nyxta-neon.vercel.app/","nyxta-josehp304s-projects.vercel.app","https://nyxta-8kupn82gu-josehp304s-projects.vercel.app","https://nyxta-cms.vercel.app"];
 
 app.use(
   cors({
