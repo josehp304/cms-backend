@@ -11,16 +11,16 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const allowedHosts = ["http://localhost:5173","https://nyxta-neon.vercel.app/","nyxta-josehp304s-projects.vercel.app","https://nyxta-8kupn82gu-josehp304s-projects.vercel.app","https://nyxta-cms.vercel.app"];
+const allowedHosts = ["http://localhost:5173","https://nyxta-neon.vercel.app","nyxta-josehp304s-projects.vercel.app","https://nyxta-8kupn82gu-josehp304s-projects.vercel.app","https://nyxta-cms.vercel.app"];
 
 app.use(
   cors({
-    origin: allowedHosts,
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
+    // credentials: true
   })
-);
+);  
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
