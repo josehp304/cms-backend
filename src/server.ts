@@ -11,11 +11,11 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
+const allowedHosts = process.env.ALLOWED_HOSTS ? process.env.ALLOWED_HOSTS.split(',') : ['http://localhost:5173'];  
 
 app.use(
   cors({
-    origin: process.env.ALLOWED_HOSTS ? process.env.ALLOWED_HOSTS.split(',') : 'http://localhost:5173',
+    origin: allowedHosts,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
